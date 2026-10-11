@@ -84,7 +84,7 @@ This intentionally does not delete the selected backup directory.
 ## Privacy and limitations
 
 - Pairing records and messages are sensitive. Do not share the backup directory.
-- The app exports normal SMS/iMessage text stored in the `text` field. Messages stored only in Apple's attributed-body format may have an empty body.
+- The app exports normal SMS/iMessage text and decodes Apple's attributed-body format when the plain text field is empty.
 - Automatic backup requires the Linux machine to be running and the iPhone to be reachable on the same local network.
 - This is an independent utility and is not affiliated with Apple.
 

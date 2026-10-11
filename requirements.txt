@@ -1,3 +1,4 @@
 pymobiledevice3==11.26.0
 cryptography==50.0.2
+pytypedstream==0.1.0
 zeroconf==0.151.5

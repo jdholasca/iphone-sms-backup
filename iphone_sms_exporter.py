@@ -6,6 +6,7 @@ import sqlite3
 import sys
 import tempfile
 import argparse
+import typedstream
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -28,6 +29,19 @@ def apple_datetime(value: object) -> str:
     while abs(seconds) > 50_000_000_000:
         seconds /= 1_000
     return (APPLE_EPOCH + timedelta(seconds=seconds)).astimezone().isoformat(timespec="seconds")
+
+
+def decode_attributed_body(blob: object) -> str:
+    if not blob:
+        return ""
+    try:
+        root = typedstream.unarchive_from_data(blob)
+        item = root.contents[0]
+        value = getattr(item, "value", item)
+        text = getattr(value, "value", "")
+        return text if isinstance(text, str) else ""
+    except (AttributeError, IndexError, OSError, TypeError, ValueError):
+        return ""
 
 
 def find_sms_database(backup_root: Path | None = None, udid: str | None = None) -> Path:
@@ -65,10 +79,12 @@ def export_csv(source: Path, destination: Path = EXPORT_PATH) -> int:
                 raise RuntimeError(f"unsupported SMS database schema; missing {sorted(required - columns)}")
             service = "m.service" if "service" in columns else "''"
             subject = "m.subject" if "subject" in columns else "''"
+            attributed_body = "m.attributedBody" if "attributedBody" in columns else "NULL"
             rows = db.execute(
                 f"""
                 SELECT m.ROWID, m.guid, m.date, m.is_from_me,
-                       COALESCE(h.id, ''), {service}, COALESCE({subject}, ''), COALESCE(m.text, '')
+                       COALESCE(h.id, ''), {service}, COALESCE({subject}, ''), COALESCE(m.text, ''),
+                       {attributed_body}
                   FROM message AS m
              LEFT JOIN handle AS h ON h.ROWID = m.handle_id
               ORDER BY m.date, m.ROWID
@@ -79,8 +95,8 @@ def export_csv(source: Path, destination: Path = EXPORT_PATH) -> int:
             with temporary_csv.open("w", newline="", encoding="utf-8") as output:
                 writer = csv.writer(output)
                 writer.writerow(("id", "guid", "date", "direction", "contact", "service", "subject", "message"))
-                for row_id, guid, date, is_from_me, contact, row_service, row_subject, text in rows:
-                    # shortcut: attributedBody-only iMessages export blank; add decoding if SMS data shows this case.
+                for row_id, guid, date, is_from_me, contact, row_service, row_subject, text, attributed in rows:
+                    text = text or decode_attributed_body(attributed)
                     writer.writerow(
                         tuple(csv_text(value) for value in
                               (row_id, guid, apple_datetime(date), "sent" if is_from_me else "received", contact,

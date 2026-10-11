@@ -5,11 +5,12 @@ import unittest
 from pathlib import Path
 
 import sys
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import iphone_sms_exporter
-from iphone_sms_exporter import apple_datetime, csv_text, export_csv
+from iphone_sms_exporter import apple_datetime, csv_text, decode_attributed_body, export_csv
 
 
 class ExporterTest(unittest.TestCase):
@@ -36,6 +37,13 @@ class ExporterTest(unittest.TestCase):
     def test_csv_formula_is_inert(self):
         self.assertEqual(csv_text("=cmd()"), "'=cmd()")
         self.assertEqual(csv_text("normal"), "normal")
+
+    def test_decodes_attributed_body_and_rejects_bad_archives(self):
+        archive = SimpleNamespace(contents=[SimpleNamespace(value=SimpleNamespace(value="Test body"))])
+        with patch("iphone_sms_exporter.typedstream.unarchive_from_data", return_value=archive):
+            self.assertEqual(decode_attributed_body(b"archive"), "Test body")
+        with patch("iphone_sms_exporter.typedstream.unarchive_from_data", side_effect=ValueError):
+            self.assertEqual(decode_attributed_body(b"bad"), "")
 
     def test_apple_nanoseconds_and_csv_export(self):
         self.assertEqual(apple_datetime(1_000_000_000), "2032-09-09T05:46:40+04:00")

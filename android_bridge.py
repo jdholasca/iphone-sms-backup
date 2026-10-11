@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.x509.oid import NameOID
 from zeroconf import IPVersion, ServiceInfo, Zeroconf
 
-from iphone_sms_exporter import apple_datetime, find_sms_database
+from iphone_sms_exporter import apple_datetime, decode_attributed_body, find_sms_database
 
 
 SERVICE_TYPE = "_iphone-sms._tcp.local."
@@ -141,10 +141,11 @@ def message_page(storage, udid, after, limit=500):
             columns = {row[1] for row in db.execute("PRAGMA table_info(message)")}
             service = "m.service" if "service" in columns else "''"
             subject = "m.subject" if "subject" in columns else "''"
+            attributed_body = "m.attributedBody" if "attributedBody" in columns else "NULL"
             rows = db.execute(
                 f"""
                 SELECT m.ROWID, m.guid, m.date, m.is_from_me, COALESCE(h.id, ''),
-                       {service}, COALESCE({subject}, ''), COALESCE(m.text, '')
+                       {service}, COALESCE({subject}, ''), COALESCE(m.text, ''), {attributed_body}
                   FROM message AS m LEFT JOIN handle AS h ON h.ROWID = m.handle_id
                  WHERE m.ROWID > ? ORDER BY m.ROWID LIMIT ?
                 """,
@@ -155,7 +156,8 @@ def message_page(storage, udid, after, limit=500):
         {
             "id": row[0], "guid": row[1] or "", "date": apple_datetime(row[2]),
             "direction": "sent" if row[3] else "received", "sender": row[4] or "Unknown",
-            "service": row[5] or "", "subject": row[6] or "", "message": row[7] or "",
+            "service": row[5] or "", "subject": row[6] or "",
+            "message": row[7] or decode_attributed_body(row[8]),
         }
         for row in rows[:limit]
     ]
