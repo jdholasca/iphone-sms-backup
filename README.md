@@ -42,7 +42,7 @@ If `~/.local/bin` is not in the shell path, sign out and back in or run the comm
 
 ## Automatic incremental backups
 
-`iphone-sms-backup.timer` checks every two minutes. If the phone is absent, it exits without an error. A file lock prevents overlapping backups.
+`iphone-sms-backup.timer` checks every two minutes and runs once when the phone appears on Wi-Fi. If the phone is absent, it exits without an error. A file lock prevents overlapping backups. iOS may still require the phone to be unlocked or ask for its passcode before allowing a backup; the running job continues after approval.
 
 ```bash
 systemctl --user status iphone-sms-backup.timer
