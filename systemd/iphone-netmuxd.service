@@ -1,0 +1,13 @@
+[Unit]
+Description=iPhone Wi-Fi compatibility bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=%h/.local/share/iphone-sms-backup/venv/bin/python %h/.local/share/iphone-sms-backup/iphone_backup_app.py run-netmuxd
+Restart=on-failure
+RestartSec=5
+Environment=RUST_LOG=warn
+
+[Install]
+WantedBy=default.target

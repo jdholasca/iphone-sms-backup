@@ -1,0 +1,10 @@
+[Unit]
+Description=Incrementally back up and export iPhone messages
+After=network-online.target iphone-netmuxd.service
+Wants=network-online.target
+Requires=iphone-netmuxd.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/iphone-sms-backup/venv/bin/python %h/.local/share/iphone-sms-backup/iphone_backup_app.py auto-backup
+TimeoutStartSec=infinity

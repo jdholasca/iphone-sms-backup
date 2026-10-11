@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up messages when the paired iPhone is available
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=2min
+Persistent=false
+Unit=iphone-sms-backup.service
+
+[Install]
+WantedBy=timers.target
