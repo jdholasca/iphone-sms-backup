@@ -62,6 +62,8 @@ iphone-sms-backup android-pair
 
 The code expires after 10 minutes. After pairing, LocalLedger imports the existing messages once and then requests only messages newer than its saved cursor. The Android app pins this server's certificate, encrypts the pairing token and imported messages with Android Keystore, and checks for new messages in the background about every 15 minutes.
 
+The LAN-only LocalLedger Web interface includes an **iPhone Backup** administration page for status, service controls, logs, manual backups, and Android pairing. Its administration API uses a private Unix socket shared only with the local web container and is not exposed directly to the network.
+
 If a firewall blocks discovery or sync, allow mDNS and TCP port `18765` from the server's local subnet only. For this server's current LAN:
 
 ```bash
@@ -72,8 +74,8 @@ sudo ufw allow from 192.168.2.0/24 to any port 18765 proto tcp comment 'LocalLed
 ## Uninstall
 
 ```bash
-systemctl --user disable --now iphone-sms-backup.timer iphone-netmuxd.service iphone-android-bridge.service
-rm -f ~/.config/systemd/user/iphone-sms-backup.{service,timer} ~/.config/systemd/user/iphone-netmuxd.service ~/.config/systemd/user/iphone-android-bridge.service
+systemctl --user disable --now iphone-sms-backup.timer iphone-netmuxd.service iphone-android-bridge.service iphone-backup-admin.service
+rm -f ~/.config/systemd/user/iphone-sms-backup.{service,timer} ~/.config/systemd/user/iphone-netmuxd.service ~/.config/systemd/user/iphone-android-bridge.service ~/.config/systemd/user/iphone-backup-admin.service
 rm -f ~/.local/bin/iphone-sms-backup ~/.local/bin/iphone-backup
 rm -rf ~/.local/share/iphone-sms-backup ~/.config/iphone-sms-backup
 systemctl --user daemon-reload

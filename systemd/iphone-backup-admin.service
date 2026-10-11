@@ -1,0 +1,13 @@
+[Unit]
+Description=Local iPhone backup administration API
+After=default.target
+
+[Service]
+RuntimeDirectory=iphone-backup-admin
+RuntimeDirectoryMode=0700
+ExecStart=%h/.local/share/iphone-sms-backup/venv/bin/python %h/.local/share/iphone-sms-backup/admin_server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

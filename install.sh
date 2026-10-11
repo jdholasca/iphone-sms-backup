@@ -42,15 +42,18 @@ chmod 0755 "$install_dir/bin/netmuxd"
 install -m 0755 "$source_dir/iphone_backup_app.py" "$install_dir/"
 install -m 0755 "$source_dir/iphone_sms_exporter.py" "$install_dir/"
 install -m 0755 "$source_dir/android_bridge.py" "$install_dir/"
+install -m 0755 "$source_dir/admin_server.py" "$install_dir/"
 install -m 0755 "$source_dir/iphone-backup" "$install_dir/"
 install -m 0755 "$source_dir/sync.sh" "$install_dir/"
 install -m 0644 "$source_dir/systemd/iphone-netmuxd.service" "$unit_dir/"
 install -m 0644 "$source_dir/systemd/iphone-sms-backup.service" "$unit_dir/"
 install -m 0644 "$source_dir/systemd/iphone-sms-backup.timer" "$unit_dir/"
 install -m 0644 "$source_dir/systemd/iphone-android-bridge.service" "$unit_dir/"
+install -m 0644 "$source_dir/systemd/iphone-backup-admin.service" "$unit_dir/"
 ln -sfn "$install_dir/iphone-backup" "$bin_dir/iphone-sms-backup"
 ln -sfn "$install_dir/iphone-backup" "$bin_dir/iphone-backup"
 systemctl --user daemon-reload
+systemctl --user enable --now iphone-backup-admin.service
 
 echo
 echo "Installation complete. Starting guided setup..."
