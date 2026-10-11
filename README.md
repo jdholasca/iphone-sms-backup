@@ -36,6 +36,7 @@ iphone-sms-backup status   # completion, percentage, last export and free space
 iphone-sms-backup backup   # start an incremental backup now
 iphone-sms-backup logs     # latest backup log
 iphone-sms-backup setup    # repeat guided setup
+iphone-sms-backup android-pair # create a one-time LocalLedger pairing code
 ```
 
 If `~/.local/bin` is not in the shell path, sign out and back in or run the command using `~/.local/bin/iphone-sms-backup`.
@@ -51,11 +52,28 @@ systemctl --user list-timers iphone-sms-backup.timer
 
 The CSV is saved as `exports/messages.csv` under the chosen storage directory. Backup directories use private permissions and the CSV is mode `0600`.
 
+## LocalLedger Android sync
+
+The installer also runs a private HTTPS bridge advertised only on the local network. In LocalLedger, open **Settings → Data → iPhone SMS**, discover this server, and enter the one-time code printed by:
+
+```bash
+iphone-sms-backup android-pair
+```
+
+The code expires after 10 minutes. After pairing, LocalLedger imports the existing messages once and then requests only messages newer than its saved cursor. The Android app pins this server's certificate, encrypts the pairing token and imported messages with Android Keystore, and checks for new messages in the background about every 15 minutes.
+
+If a firewall blocks discovery or sync, allow mDNS and TCP port `18765` from the server's local subnet only. For this server's current LAN:
+
+```bash
+sudo ufw allow from 192.168.2.0/24 to any port 5353 proto udp comment 'Local mDNS'
+sudo ufw allow from 192.168.2.0/24 to any port 18765 proto tcp comment 'LocalLedger iPhone SMS'
+```
+
 ## Uninstall
 
 ```bash
-systemctl --user disable --now iphone-sms-backup.timer iphone-netmuxd.service
-rm -f ~/.config/systemd/user/iphone-sms-backup.{service,timer} ~/.config/systemd/user/iphone-netmuxd.service
+systemctl --user disable --now iphone-sms-backup.timer iphone-netmuxd.service iphone-android-bridge.service
+rm -f ~/.config/systemd/user/iphone-sms-backup.{service,timer} ~/.config/systemd/user/iphone-netmuxd.service ~/.config/systemd/user/iphone-android-bridge.service
 rm -f ~/.local/bin/iphone-sms-backup ~/.local/bin/iphone-backup
 rm -rf ~/.local/share/iphone-sms-backup ~/.config/iphone-sms-backup
 systemctl --user daemon-reload

@@ -146,6 +146,7 @@ def setup():
     print("\n5/5 Starting the first SMS backup. This is the longest run.\n")
     backup(manual=True)
     command(("systemctl", "--user", "enable", "--now", "iphone-sms-backup.timer"))
+    command(("systemctl", "--user", "enable", "--now", "iphone-android-bridge.service"))
     print("\nSetup complete. Incremental backups will run automatically when the iPhone is on this Wi-Fi.")
 
 
@@ -266,7 +267,9 @@ def run_netmuxd():
 
 def main():
     parser = argparse.ArgumentParser(prog="iphone-sms-backup", description="Private iPhone SMS backup over local Wi-Fi")
-    parser.add_argument("command", nargs="?", default="setup", choices=("setup", "backup", "auto-backup", "status", "logs", "run-netmuxd"))
+    parser.add_argument("command", nargs="?", default="setup", choices=(
+        "setup", "backup", "auto-backup", "status", "logs", "run-netmuxd", "android-pair", "android-bridge",
+    ))
     args = parser.parse_args()
     try:
         if args.command == "setup":
@@ -277,8 +280,19 @@ def main():
             status()
         elif args.command == "logs":
             logs()
-        else:
+        elif args.command == "run-netmuxd":
             run_netmuxd()
+        elif args.command == "android-pair":
+            from android_bridge import create_pair_code
+            config = load_config()
+            code, server_id, _ = create_pair_code(config["storage"])
+            print(f"LocalLedger server: {server_id}")
+            print(f"Pairing code: {code}")
+            print("This one-time code expires in 10 minutes.")
+        else:
+            from android_bridge import serve
+            config = load_config()
+            serve(config["storage"], config["udid"])
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         print(f"Error: {error}", file=sys.stderr)
         return 1
